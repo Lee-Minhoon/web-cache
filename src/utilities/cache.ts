@@ -9,6 +9,12 @@ export const openCache = async (storageName: string): Promise<Cache> => {
   return storage;
 };
 
+/**
+ * 스토리지 안에 URL을 키로, 데이터를 저장한다.
+ * @param storageName
+ * @param url
+ * @param res
+ */
 export const putCache = async (
   storageName: string,
   url: string,
@@ -19,17 +25,6 @@ export const putCache = async (
 };
 
 /**
- * 스토리지안에 요청한 URL을 키로 가진 캐시 데이터가 있는지 확인한다.
- * @param storageName
- * @param url
- * @returns 캐시 데이터가 없다면 undefined를 반환한다.
- */
-export const matchCache = async (storageName: string, url: string) => {
-  const storage = await openCache(storageName);
-  return storage.match(url);
-};
-
-/**
  * 스토리지 안에 URL를 키로 가진 캐시 데이터를 삭제한다.
  * @param storageName
  * @param url
@@ -37,6 +32,17 @@ export const matchCache = async (storageName: string, url: string) => {
 export const deleteCache = async (storageName: string, url: string) => {
   const storage = await openCache(storageName);
   storage.delete(url);
+};
+
+/**
+ * 스토리지 안에 요청한 URL을 키로 가진 캐시 데이터가 있는지 확인한다.
+ * @param storageName
+ * @param url
+ * @returns 캐시 데이터가 없다면 undefined를 반환한다.
+ */
+export const matchCache = async (storageName: string, url: string) => {
+  const storage = await openCache(storageName);
+  return storage.match(url);
 };
 
 /**
@@ -59,10 +65,13 @@ export const call = async <T>(
     });
   } else {
     fetch(requestUrl).then((res) => {
-      res.json().then((res) => {
-        callback && callback(res, "api response");
-      });
-      return putCache(storageName, requestUrl, res);
+      putCache(storageName, requestUrl, res);
+      res
+        .clone()
+        .json()
+        .then((res: T) => {
+          callback && callback(res, "api response");
+        });
     });
   }
 };
